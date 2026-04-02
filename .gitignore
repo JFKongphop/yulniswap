@@ -19,3 +19,7 @@ ignition/deployments/chain-31337
 .DS_Store
 build
 unused
+
+v2-core
+v3-core
+v4-core
