@@ -11,10 +11,6 @@ object "ERC20" {
 	}    
   object "runtime" {
     code {
-      /* MAPPING */
-      let BALANCE_OF_MAPPING := 0xe2e4263afad30923c891518314c3c95dbe830a16874e8abc5777a9a20b54c76e
-      let ALLOWANCE_MAPPING := 0x1580adec6c68dea5886da953e9eca5c239ae00896b3de5d55248d60b547ea9d8
-
       /* EVENT */
       let TRANSFER_EVENT := 0x78d8af3b0529fcbf811085c11d77397246827610c4f2840fcd551f131644bd3a
       let APPROVAL_EVENT := 0x5f5567e8b0216a6da2ad6f0c64414036c3d7629078311dab3400b5e762d00148
@@ -56,7 +52,7 @@ object "ERC20" {
         let tokenAmount := div(sub(amount, overValue), price)
 
         mstore(0x00, from)
-        mstore(0x20, BALANCE_OF_MAPPING)
+        mstore(0x20, BALANCE_OF_MAPPING())
         let slot := keccak256(0x00, 0x40)
         sstore(slot, tokenAmount)
 
@@ -70,7 +66,7 @@ object "ERC20" {
       case 0x70a08231 /* balanceOf(address) */ {
         let userAddress := decodeAsAddress(0)
         mstore(0x00, userAddress)
-        mstore(0x20, BALANCE_OF_MAPPING)
+        mstore(0x20, BALANCE_OF_MAPPING())
         
         let slot := keccak256(0x00, 0x40)
         let userTokenBalance := sload(slot)
@@ -85,7 +81,7 @@ object "ERC20" {
         let amount := decodeAsUint(1)
 
         mstore(0x00, from)
-        mstore(0x20, BALANCE_OF_MAPPING)
+        mstore(0x20, BALANCE_OF_MAPPING())
 
         let fromSlot := keccak256(0x00, 0x40)
         let fromBalance := sload(fromSlot)
@@ -98,7 +94,7 @@ object "ERC20" {
         sstore(fromSlot, totalFromBalance)
 
         mstore(0x00, to)
-        mstore(0x20, BALANCE_OF_MAPPING)
+        mstore(0x20, BALANCE_OF_MAPPING())
 
         let toSlot := keccak256(0x00, 0x40)
         sstore(toSlot, amount)
@@ -113,7 +109,7 @@ object "ERC20" {
         let amount := decodeAsUint(1)
 
         mstore(0x00, from)
-        mstore(0x20, ALLOWANCE_MAPPING)
+        mstore(0x20, ALLOWANCE_MAPPING())
         let innerAllowanceSlot := keccak256(0x00, 0x40)
 
         mstore(0x00, spender)
@@ -132,7 +128,7 @@ object "ERC20" {
 
         // get allowance
         mstore(0x00, sender)
-        mstore(0x20, ALLOWANCE_MAPPING)
+        mstore(0x20, ALLOWANCE_MAPPING())
         let innerAllowanceSlot := keccak256(0x00, 0x40)
 
         mstore(0x00, spender)
@@ -152,7 +148,7 @@ object "ERC20" {
         let from := caller()
 
         mstore(0x00, sender)
-        mstore(0x20, ALLOWANCE_MAPPING)
+        mstore(0x20, ALLOWANCE_MAPPING())
         let innerAllowanceSlot := keccak256(0x00, 0x40)
 
         mstore(0x00, from)
@@ -169,7 +165,7 @@ object "ERC20" {
         sstore(allowanceSlot, currentAllowance)
 
         mstore(0x00, sender)
-        mstore(0x20, BALANCE_OF_MAPPING)
+        mstore(0x20, BALANCE_OF_MAPPING())
         let senderBalanceOfSlot := keccak256(0x00, 0x40)
 
         let senderBalance := sload(senderBalanceOfSlot)
@@ -182,7 +178,7 @@ object "ERC20" {
         sstore(senderBalanceOfSlot, currentSenderBalance)
         
         mstore(0x00, recipient)
-        mstore(0x20, BALANCE_OF_MAPPING)
+        mstore(0x20, BALANCE_OF_MAPPING())
         let recipientBalanceSlot := keccak256(0x00, 0x40)
 
         let recipientBalance := sload(recipientBalanceSlot)
@@ -199,7 +195,7 @@ object "ERC20" {
         let from := caller()
 
         mstore(0x00, from)
-        mstore(0x20, BALANCE_OF_MAPPING)
+        mstore(0x20, BALANCE_OF_MAPPING())
         let balanceOfSlot := keccak256(0x00, 0x40)
 
         let fromBalance := sload(balanceOfSlot)
@@ -235,6 +231,22 @@ object "ERC20" {
 
       default {
         revert(0, 0)
+      }
+
+      /* MAPPING */
+      function BALANCE_OF_MAPPING() -> memory {
+        memory := 0xe2e4263afad30923c891518314c3c95dbe830a16874e8abc5777a9a20b54c76e
+      }
+            
+      function ALLOWANCE_MAPPING() -> memory {
+        memory := 0x1580adec6c68dea5886da953e9eca5c239ae00896b3de5d55248d60b547ea9d8
+      }
+
+      function setMapping(key, value, memory) {
+        mstore(0x00, key)
+        mstore(0x20, memory)
+        let slot := keccak256(0x00, 0x40)
+        sstore(slot, value)
       }
 
       /* PARAMETER MANAGERMENT*/
