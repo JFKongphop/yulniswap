@@ -66,8 +66,8 @@ describe('ERC20', async () => {
       const balanceOf = await providerCall('balanceOf', [user1.address]);
 
       expect(data).equal(totalSupply);
-      expect(fromAddress).equal(zeroPadValue('0x'));
-      expect(toAddress).equal(zeroPadValue(user1.address));
+      expect(fromAddress).equal(zeroPadValue(user1.address));
+      expect(toAddress).equal(zeroPadValue('0x'));
       expect(Number(totalSupply)).equal(expectMintAmount);
       expect(contractBalance).equal(mintValue);
       expect(Number(balanceOf)).equal(expectMintAmount);
@@ -94,8 +94,8 @@ describe('ERC20', async () => {
       const [_, fromAddress, toAddress] = topics;
 
       expect(Number(data)).equal(expectMintAmount);
-      expect(fromAddress).equal(zeroPadValue('0x'));
-      expect(toAddress).equal(zeroPadValue(user2.address));
+      expect(fromAddress).equal(zeroPadValue(user2.address));
+      expect(toAddress).equal(zeroPadValue('0x'));
       expect(Number(totalSupply)).equal(totalBalanceOf);
       expect(Number(contractBalance)).equal(expectContractBalance);
     });
