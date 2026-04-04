@@ -12,7 +12,6 @@ object "ERC20" {
   object "runtime" {
     code {
       /* EVENT */
-      let TRANSFER_EVENT := 0x78d8af3b0529fcbf811085c11d77397246827610c4f2840fcd551f131644bd3a
       let APPROVAL_EVENT := 0x5f5567e8b0216a6da2ad6f0c64414036c3d7629078311dab3400b5e762d00148
       
       let selector := shr(224, calldataload(0))
@@ -60,8 +59,6 @@ object "ERC20" {
         sstore(0x18160ddd, add(totalSupply, tokenAmount))
 
         emitTransfer(from, 0, tokenAmount)
-        // mstore(0x00, tokenAmount)
-        // log3(0x00, 0x20, TRANSFER_EVENT, 0, from)
       }
 
       case 0x70a08231 /* balanceOf(address) */ {
@@ -100,8 +97,6 @@ object "ERC20" {
         let toSlot := keccak256(0x00, 0x40)
         sstore(toSlot, amount)
 
-        // mstore(0x00, amount)
-        // log3(0x00, 0x20, TRANSFER_EVENT, from, to)
         emitTransfer(from, to, amount)
       }
 
@@ -120,8 +115,7 @@ object "ERC20" {
         let slot := keccak256(0x00, 0x40)  
         sstore(slot, amount)
 
-        mstore(0x00, amount)
-        log3(0x00, 0x20, APPROVAL_EVENT, from, spender)
+        emitApproval(from, spender, amount)
       }
 
       case 0xdd62ed3e /* allowance(address, address) */ {
@@ -188,8 +182,6 @@ object "ERC20" {
         let currentRecipientBalance := add(recipientBalance, amount)
         sstore(recipientBalanceSlot, currentRecipientBalance)
         
-        // mstore(0x00, amount)
-        // log3(0x00, 0x20, TRANSFER_EVENT, sender, recipient)
         emitTransfer(sender, recipient, amount)
       }
 
@@ -259,6 +251,14 @@ object "ERC20" {
         mstore(0x00, amount)
         log3(0x00, 0x20, hash, from, to)
       }
+
+      function emitApproval(from, to, amount) {
+        let hash := 0x5f5567e8b0216a6da2ad6f0c64414036c3d7629078311dab3400b5e762d00148
+
+        mstore(0x00, amount)
+        log3(0x00, 0x20, hash, from, to)
+      }        
+        
 
       /* PARAMETER MANAGERMENT*/
       function decodeAsAddress(offset) -> value {
