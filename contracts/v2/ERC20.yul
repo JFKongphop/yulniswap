@@ -68,19 +68,7 @@ object "ERC20" {
         let sender := decodeAsAddress(0)
         let spender := decodeAsAddress(1)
 
-        // get allowance
-        mstore(0x00, sender)
-        mstore(0x20, ALLOWANCE_MAPPING())
-        let innerAllowanceSlot := keccak256(0x00, 0x40)
-
-        mstore(0x00, spender)
-        mstore(0x20, innerAllowanceSlot)
-
-        let allowanceSlot := keccak256(0x00, 0x40)
-        let allowanceValue := sload(allowanceSlot)
-
-        mstore(0x00, allowanceValue)
-        return(0x00, 0x20)
+        allowance(sender, spender)
       }
 
       case 0x23b872dd /* transferFrom(address,address,uint) */ {
@@ -89,89 +77,20 @@ object "ERC20" {
         let amount := decodeAsUint(2)
         let from := caller()
 
-        mstore(0x00, sender)
-        mstore(0x20, ALLOWANCE_MAPPING())
-        let innerAllowanceSlot := keccak256(0x00, 0x40)
-
-        mstore(0x00, from)
-        mstore(0x20, innerAllowanceSlot)
-        
-        let allowanceSlot := keccak256(0x00, 0x40)
-        let allowanceAmount := sload(allowanceSlot)
-
-        if gt(amount, allowanceAmount) {
-          revertError(INVALID_BALANCE_ERROR())
-        }
-
-        let currentAllowance := sub(allowanceAmount, amount)
-        sstore(allowanceSlot, currentAllowance)
-
-        mstore(0x00, sender)
-        mstore(0x20, BALANCE_OF_MAPPING())
-        let senderBalanceOfSlot := keccak256(0x00, 0x40)
-
-        let senderBalance := sload(senderBalanceOfSlot)
-
-        if gt(amount, senderBalance) {
-          revertError(INVALID_BALANCE_ERROR())
-        }
-
-        let currentSenderBalance := sub(senderBalance, amount)
-        sstore(senderBalanceOfSlot, currentSenderBalance)
-        
-        mstore(0x00, recipient)
-        mstore(0x20, BALANCE_OF_MAPPING())
-        let recipientBalanceSlot := keccak256(0x00, 0x40)
-
-        let recipientBalance := sload(recipientBalanceSlot)
-
-        let currentRecipientBalance := add(recipientBalance, amount)
-        sstore(recipientBalanceSlot, currentRecipientBalance)
-        
-        emitTransfer(sender, recipient, amount)
+        transferFrom(from, sender, recipient, amount)
       }
 
       case 0x42966c68 /* burn(uint) */ {
         let amount := decodeAsUint(0)
         let from := caller()
 
-        mstore(0x00, from)
-        mstore(0x20, BALANCE_OF_MAPPING())
-        let balanceOfSlot := keccak256(0x00, 0x40)
-
-        let fromBalance := sload(balanceOfSlot)
-
-        if gt(amount, fromBalance) {
-          revertError(INVALID_BALANCE_ERROR())
-        }
-
-        let currentBalance := sub(fromBalance, amount)
-        sstore(balanceOfSlot, currentBalance)
-
-        let totalSupply := getStorageData(0x18160ddd)
-        let currentTotalSupply := sub(totalSupply, amount)
-        sstore(0x18160ddd, currentTotalSupply)
-
-        let price := getStorageData(0xa035b1fe)
-        let sellAmount := mul(price, amount)
-
-        let success := call(
-          gas(),
-          from,
-          sellAmount,
-          0,
-          0,
-          0, 
-          0
-        )
-
-        if iszero(success) {
-          revertError(INVALID_VALUES_ERROR())
-        }
+        burn(from, amount)
       }
 
       default {
-        revert(0, 0)
+        // cast --format-bytes32-string "INVALID FUNCTION"
+        let error := 0x494e56414c49442046554e4354494f4e00000000000000000000000000000000
+        revertError(error)
       }
 
       /* INTERNAL FUNCTION */
@@ -229,8 +148,47 @@ object "ERC20" {
         emitTransfer(from, to, amount)
       }
 
-      function transferFrom(from, to, amount) {
+      function transferFrom(from, sender, recipient, amount) {
+        mstore(0x00, sender)
+        mstore(0x20, ALLOWANCE_MAPPING())
+        let innerAllowanceSlot := keccak256(0x00, 0x40)
 
+        mstore(0x00, from)
+        mstore(0x20, innerAllowanceSlot)
+        
+        let allowanceSlot := keccak256(0x00, 0x40)
+        let allowanceAmount := sload(allowanceSlot)
+
+        if gt(amount, allowanceAmount) {
+          revertError(INVALID_BALANCE_ERROR())
+        }
+
+        let currentAllowance := sub(allowanceAmount, amount)
+        sstore(allowanceSlot, currentAllowance)
+
+        mstore(0x00, sender)
+        mstore(0x20, BALANCE_OF_MAPPING())
+        let senderBalanceOfSlot := keccak256(0x00, 0x40)
+
+        let senderBalance := sload(senderBalanceOfSlot)
+
+        if gt(amount, senderBalance) {
+          revertError(INVALID_BALANCE_ERROR())
+        }
+
+        let currentSenderBalance := sub(senderBalance, amount)
+        sstore(senderBalanceOfSlot, currentSenderBalance)
+        
+        mstore(0x00, recipient)
+        mstore(0x20, BALANCE_OF_MAPPING())
+        let recipientBalanceSlot := keccak256(0x00, 0x40)
+
+        let recipientBalance := sload(recipientBalanceSlot)
+
+        let currentRecipientBalance := add(recipientBalance, amount)
+        sstore(recipientBalanceSlot, currentRecipientBalance)
+        
+        emitTransfer(sender, recipient, amount)
       }
 
       function approve(from, spender, amount) {
@@ -247,11 +205,57 @@ object "ERC20" {
         emitApproval(from, spender, amount)
       }
 
-      function burn(from, amount) {
+      function allowance(sender, spender) {
+        mstore(0x00, sender)
+        mstore(0x20, ALLOWANCE_MAPPING())
+        let innerAllowanceSlot := keccak256(0x00, 0x40)
 
+        mstore(0x00, spender)
+        mstore(0x20, innerAllowanceSlot)
+
+        let allowanceSlot := keccak256(0x00, 0x40)
+        let allowanceValue := sload(allowanceSlot)
+
+        mstore(0x00, allowanceValue)
+        return(0x00, 0x20)
       }
 
+      function burn(from, amount) {
 
+        mstore(0x00, from)
+        mstore(0x20, BALANCE_OF_MAPPING())
+        let balanceOfSlot := keccak256(0x00, 0x40)
+
+        let fromBalance := sload(balanceOfSlot)
+
+        if gt(amount, fromBalance) {
+          revertError(INVALID_BALANCE_ERROR())
+        }
+
+        let currentBalance := sub(fromBalance, amount)
+        sstore(balanceOfSlot, currentBalance)
+
+        let totalSupply := getStorageData(0x18160ddd)
+        let currentTotalSupply := sub(totalSupply, amount)
+        sstore(0x18160ddd, currentTotalSupply)
+
+        let price := getStorageData(0xa035b1fe)
+        let sellAmount := mul(price, amount)
+
+        let success := call(
+          gas(),
+          from,
+          sellAmount,
+          0,
+          0,
+          0, 
+          0
+        )
+
+        if iszero(success) {
+          revertError(INVALID_VALUES_ERROR())
+        }
+      }
 
       /* MAPPING */
       function BALANCE_OF_MAPPING() -> memory {
